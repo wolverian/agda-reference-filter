@@ -1,6 +1,12 @@
-This is a literate Agda file. This span - `span` - will be linked to the record below:
+This is a literate Agda file.
+
+Here's some inline code:
+
+- This is a link to the record below: `Record`{.agda}
+- This is not: `Record`
+- This is a link with alternate text: `also a link`{.agda ident=Record}
 
 ```agda
-record span : Set where
+record Record : Set where
   constructor hey-look
 ```

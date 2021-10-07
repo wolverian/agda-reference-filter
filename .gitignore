@@ -1,2 +1,6 @@
 /.stack-work
 /agda-reference-filter
+
+/example/Agda*.html
+/example/*.agdai
+/example/*.css

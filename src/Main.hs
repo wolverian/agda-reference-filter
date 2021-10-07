@@ -25,23 +25,62 @@ linkDocument (Pandoc meta blocks) =
   let hm = parseSymbolRefs blocks
    in Pandoc meta (walk (link hm) blocks)
 
-link :: HashMap Text Text -> Inline -> Inline
-link hm (Code attrs xs)
-  | Just sp <- HashMap.lookup xs hm = RawInline (Format "html") sp
+link :: HashMap Text Reference -> Inline -> Inline
+link hm inline@(Code (_, classes, kv) text)
+  | isToBeLinked =
+    case HashMap.lookup identifier hm of
+      Just ref -> RawInline "html" (renderReference ref text)
+      Nothing -> inline
+  where
+    classes' = map T.toLower classes
+
+    isToBeLinked = ("agda" `elem` classes')
+                && ("nolink" `notElem` classes')
+
+    identifier =
+      case lookup "ident" kv of
+        Just id -> id
+        _ -> text
 link _ x = x
 
-parseSymbolRefs :: [Block] -> HashMap Text Text
+renderReference :: Reference -> Text -> Text
+renderReference (Reference href cls) t =
+  renderTags [ TagOpen "pre" [("class", "Agda")]
+             , TagOpen "a" [("href", href), ("class", cls)]
+             , TagText t
+             , TagClose "a"
+             , TagClose "pre"
+             ]
+
+data Reference =
+  Reference { refHref  :: Text
+            , refClass :: Text
+            }
+  deriving (Eq, Show)
+
+parseSymbolRefs :: [Block] -> HashMap Text Reference
 parseSymbolRefs = go mempty . concat . mapMaybe getHTML where
+  getHTML :: Block -> Maybe ([Tag Text])
   getHTML (RawBlock (Format x) xs)
-    | x == "html" = Just (parseTags (T.unpack xs))
+    | x == "html" = Just (parseTags xs)
   getHTML _ = Nothing
 
-  go map (TagOpen "a" meta:TagText t:TagClose "a":xs)
-    | Just id <- lookup "id" meta, Just cls <- lookup "class" meta
-    = go (HashMap.insert (T.pack t) (T.pack (renderTags tags)) map) xs
+  go :: HashMap Text Reference -> [Tag Text] -> HashMap Text Reference
+  go map (TagOpen a meta:TagText t:TagClose a':xs)
+    | a == "a"
+    , a' == a
+    , Just id <- lookup "id" meta
+    , Just cls <- lookup "class" meta
+    , Just href <- lookup "href" meta
+    = go (addIfNotPresent t (Reference href cls) map) xs
+
     | otherwise = go map xs
     where
       tags = [ TagOpen "span" [("class", "Agda")], TagOpen "a" meta', TagText t, TagClose "a", TagClose "span" ]
       meta' = filter ((/= "id") . fst) meta
+
   go map (_:xs) = go map xs
   go map [] = map
+
+addIfNotPresent :: Text -> v -> HashMap Text v -> HashMap Text v
+addIfNotPresent = HashMap.insertWith (\_ old -> old) 
