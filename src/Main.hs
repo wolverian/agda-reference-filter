@@ -45,11 +45,11 @@ link _ x = x
 
 renderReference :: Reference -> Text -> Text
 renderReference (Reference href cls) t =
-  renderTags [ TagOpen "pre" [("class", "Agda")]
+  renderTags [ TagOpen "span" [("class", "Agda")]
              , TagOpen "a" [("href", href), ("class", cls)]
              , TagText t
              , TagClose "a"
-             , TagClose "pre"
+             , TagClose "span"
              ]
 
 data Reference =
