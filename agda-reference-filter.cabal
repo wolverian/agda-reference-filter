@@ -1,0 +1,13 @@
+cabal-version: 2.2
+name:          agda-reference-filter
+version:       0.1.0.0
+
+executable agda-reference-filter
+  hs-source-dirs:      src
+  main-is:             Main.hs
+  default-language:    Haskell2010
+  build-depends:       base >= 4.7 && < 5
+                     , tagsoup
+                     , pandoc-types
+                     , unordered-containers
+                     , text
