@@ -62,8 +62,11 @@ parseSymbolRefs :: [Block] -> HashMap Text Reference
 parseSymbolRefs = go mempty . concat . mapMaybe getHTML where
   getHTML :: Block -> Maybe ([Tag Text])
   getHTML (RawBlock (Format x) xs)
-    | x == "html" = Just (parseTags xs)
+    | x == "html" = Just (concatMap parseTags' (parseTags xs))
   getHTML _ = Nothing
+
+  parseTags' (TagComment x) = parseTags x >>= parseTags'
+  parseTags' t = pure t
 
   go :: HashMap Text Reference -> [Tag Text] -> HashMap Text Reference
   go map (TagOpen a meta:TagText t:TagClose a':xs)
