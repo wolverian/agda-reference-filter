@@ -16,7 +16,6 @@ import Text.HTML.TagSoup
 import Text.Pandoc.Walk
 import Text.Pandoc.JSON
 
-
 main :: IO ()
 main = toJSONFilter linkDocument
 
@@ -63,6 +62,8 @@ parseSymbolRefs = go mempty . concat . mapMaybe getHTML where
   getHTML :: Block -> Maybe ([Tag Text])
   getHTML (RawBlock (Format x) xs)
     | x == "html" = Just (concatMap parseTags' (parseTags xs))
+  getHTML (BlockQuote bs) = pure . concat $ mapMaybe getHTML bs
+  getHTML (Div _ bs) = pure . concat $ mapMaybe getHTML bs
   getHTML _ = Nothing
 
   parseTags' (TagComment x) = parseTags x >>= parseTags'
